@@ -9,6 +9,7 @@
   "scripts": {
     "build": "babel  server/ -d dist/",
     "start": "nodemon server/index.js --exec babel-node",
+    "product": "node dist/index.js",
     "serve": "pm2 start dist/index.js"
   },
   "dependencies": {
