@@ -8,8 +8,8 @@ npm-debug.log
 .DS_Store
 
 # Build
-dist
-build
+# dist
+# build
 
 # Docker
 Dockerfile
