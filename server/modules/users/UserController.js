@@ -1,6 +1,6 @@
-import User from '../../../models/User.js';
-import Response from '../../../lib/utils/Response';
+import User from '../../models/User';
 import uuid from 'uuid';
+
 /**
  * Create new user
  */
@@ -11,7 +11,6 @@ exports.create = async (req, res) => {
       name: req.body.name,
       password: req.body.password
     });
-    console.log('USER: ', user);
     const result = await user.save();
 
     return Response.success(res, result)

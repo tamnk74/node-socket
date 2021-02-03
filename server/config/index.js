@@ -1,12 +1,15 @@
 import DotENV from 'dotenv';
-import dbConfig from './database.config'
+import mongoConfig from './database.config';
 
 DotENV.config();
 const env = process.env.NODE_ENV || 'development';
+const port = process.env.PORT || 4000;
+const JWT_EXPIRATION_MINUTES = process.env.JWT_EXPIRATION || 3600;
+const MONGODB_URI = mongoConfig[env];
 
-module.exports = {
+export {
   env,
-  port: process.env.PORT || 4000,
-  JWT_EXPIRATION_MINUTES: process.env.JWT_EXPIRATION_MINUTES || 3600,
-  DB_URL: dbConfig[process.env.NODE_ENV]
+  port,
+  JWT_EXPIRATION_MINUTES,
+  MONGODB_URI,
 };

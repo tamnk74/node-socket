@@ -1,6 +1,5 @@
-import Message from '../../../models/Message.js';
-import Response from '../../../lib/utils/Response';
 import uuid from 'uuid';
+import Message from '../../models/Message';
 /**
  * Create new Message
  */
@@ -9,13 +8,12 @@ exports.create = async (req, res) => {
     const message = new Message({
       id: uuid.v4(),
       userId: req.body.userId,
-      message: req.body.message
+      message: req.body.message,
     });
     const result = await message.save();
-    return Response.success(res, result)
-  }
-  catch (err) {
-    return Response.error(res, err)
+    return res.status(201).send(result);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -25,10 +23,9 @@ exports.create = async (req, res) => {
 exports.findAll = async (req, res) => {
   try {
     const messages = await Message.find();
-    return Response.success(res, messages);
-  }
-  catch (err) {
-    return Response.error(res, err)
+    return res.status(200).send(messages);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -38,10 +35,9 @@ exports.findAll = async (req, res) => {
 exports.findOne = async (req, res) => {
   try {
     const message = await Message.findById(req.params.id);
-    return Response.success(res, message);
-  }
-  catch (err) {
-    return Response.error(res, err)
+    return res.status(200).send(message);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -50,11 +46,11 @@ exports.findOne = async (req, res) => {
  */
 exports.update = async (req, res) => {
   try {
-    const message = await Message.findByIdAndUpdate(req.params.id,{ message: req.body.message }, { new: true });
-    return Response.success(res, message);
-  }
-  catch (err) {
-    return Response.error(res, err)
+    const message = await Message.findByIdAndUpdate(req.params.id,
+      { message: req.body.message }, { new: true });
+    return res.status(200).send(message);
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -64,9 +60,8 @@ exports.update = async (req, res) => {
 exports.delete = async (req, res) => {
   try {
     const message = await Message.findByIdAndRemove(req.params.id);
-    return Response.success(res, message);
-  }
-  catch (err) {
-    return Response.error(res, err)
+    return res.status(200).send(message);
+  } catch (err) {
+    next(err);
   }
 };
