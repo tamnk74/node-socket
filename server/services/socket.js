@@ -8,8 +8,8 @@ class Socket {
 
   listenConnection() {
     this.socketIO.on('connection', (socket) => {
-      console.log('New user connected');
-      io.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
+      console.log('New user connected', socket);
+      this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
       // default username
       socket.username = 'Anonymous';
 
@@ -20,7 +20,7 @@ class Socket {
       });
 
       // listen on new_message
-      socket.on('new_message', (data) => {
+      socket.on('new_message', async (data) => {
         // broadcast the new message
         console.log('add message:', data);
         const message = new Message({
@@ -28,8 +28,8 @@ class Socket {
           userId: data.userId || socket.userId,
           message: data.message,
         });
-        message.save();
-        io.sockets.emit('new_message', { message: data.message, username: socket.username, id: socket.id });
+        await message.save();
+        this.socketIO.sockets.emit('new_message', { message: data.message, username: socket.username, id: socket.id });
       });
 
       // listen on typing

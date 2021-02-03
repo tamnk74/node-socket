@@ -5,10 +5,8 @@ import compression from 'compression';
 import bodyParser from 'body-parser';
 import { WebRouter, ApiRouter } from './routes';
 import './database';
-import './services/socket';
 import Socket from './services/socket';
-
-const PORT = process.env.PORT || 4000;
+import { port } from './config'
 
 const app = express();
 const http = require('http').Server(app);
@@ -30,4 +28,4 @@ app.use('/api', ApiRouter);
 
 socket.listenConnection();
 
-http.listen(PORT, () => console.log(`Listening on ${PORT}`));
+http.listen(port, () => console.log(`Listening on ${port}`));
