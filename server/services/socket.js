@@ -7,8 +7,16 @@ class Socket {
   }
 
   listenConnection() {
+    // this.socketIO.use(async (socket, next) => {
+    //   try {
+    //     const user = await fetchUser(socket);
+    //     socket.user = user;
+    //   } catch (e) {
+    //     next(new Error("unknown user"));
+    //   }
+    // });
     this.socketIO.on('connection', (socket) => {
-      console.log('New user connected', socket);
+      console.log('New user connected', socket.req.headers);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
       // default username
       socket.username = 'Anonymous';
