@@ -1,0 +1,32 @@
+{
+  "ERR-0401": {
+    "status": 401,
+    "title": "Unauthorized",
+    "detail": "Unauthorized"
+  },
+  "ERR-0400": {
+    "status": 400,
+    "title": "Bad Request",
+    "detail": "Bad Request"
+  },
+  "ERR-0403": {
+    "status": 403,
+    "title": "Forbidden",
+    "detail": "Forbidden"
+  },
+  "ERR-0404": {
+    "status": 404,
+    "title": "Not Found",
+    "detail": "Not Found"
+  },
+  "ERR-0422": {
+    "status": 422,
+    "title": "Invalid Data",
+    "detail": "Invalid Data"
+  },
+  "ERR-0500": {
+    "status": 500,
+    "title": "Internal Server Error",
+    "detail": "Internal Server Error"
+  }
+}
