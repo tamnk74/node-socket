@@ -16,16 +16,8 @@ class Socket {
     //   }
     // });
     this.socketIO.on('connection', (socket) => {
-      console.log('New user connected', socket.rooms, socket.handshake);
+      console.log('New user connected', socket.id);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
-      // default username
-      socket.username = 'Anonymous';
-
-      // Listen on change_username
-      socket.on('change_username', (data) => {
-        socket.username = data.username;
-        console.log('Username:', socket.id, socket.rooms, socket.username);
-      });
 
       // listen on new_message
       socket.on('new_message', async (data) => {
@@ -43,6 +35,11 @@ class Socket {
       // listen on typing
       socket.on('typing', (data) => {
         socket.broadcast.emit('typing', { username: socket.username });
+      });
+
+      socket.on("disconnect", () => {
+        console.log(`Client ${socket.id} diconnected`);
+        // socket.leave(roomId);
       });
     });
   }
