@@ -1,39 +1,58 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
+
+import findOrCreate from './plugins/findOrCreate';
+import toJSON from './plugins/toJSON';
+
 const SALT_WORK_FACTOR = 10;
 
-const UserSchema = mongoose.Schema({
-  id: {
-    type: String,
-    required: true,
+const UserSchema = mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      index: {
+        unique: true,
+      },
+    },
+    email: {
+      type: String,
+      required: true,
+      index: {
+        unique: true,
+      },
+    },
+    avatar: {
+      type: String,
+      required: false,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: Boolean,
+      required: true,
+      default: false
+    },
   },
-  name: {
-    type: String,
-    required: true,
-    index: {
-      unique: true
-    }
-  },
-  password: {
-    type: String,
-    required: true
-  },
-}, {
-    timestamps: true
-  });
+  {
+    timestamps: true,
+  }
+);
 
-UserSchema.pre('save', function (next) {
-  var user = this;
+UserSchema.pre('save', function handlePassword(next) {
+  const user = this;
 
   // only hash the password if it has been modified (or is new)
   if (!user.isModified('password')) return next();
 
   // generate a salt
-  bcrypt.genSalt(SALT_WORK_FACTOR, function (err, salt) {
+  bcryptjs.genSalt(SALT_WORK_FACTOR, (err, salt) => {
     if (err) return next(err);
 
     // hash the password using our new salt
-    bcrypt.hash(user.password, salt, function (err, hash) {
+    bcryptjs.hash(user.password, salt, (err, hash) => {
       if (err) return next(err);
 
       // override the cleartext password with the hashed one
@@ -43,11 +62,25 @@ UserSchema.pre('save', function (next) {
   });
 });
 
-UserSchema.methods.comparePassword = function(candidatePassword, cb) {
-  bcrypt.compare(candidatePassword, this.password, function(err, isMatch) {
-      if (err) return cb(err);
-      cb(null, isMatch);
-  });
+UserSchema.plugin(findOrCreate);
+UserSchema.plugin(toJSON);
+
+UserSchema.methods.toPayload = function toPayload() {
+  return {
+    user: {
+      id: this.id,
+      email: this.email,
+      name: this.name,
+      fullName: this.fullName,
+    },
+  };
 };
 
-module.exports = mongoose.model('User', UserSchema);
+UserSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  return bcryptjs.compareSync(candidatePassword, this.password);
+};
+
+const User = mongoose.model('User', UserSchema);
+User.INACTIVE = 0;
+
+module.exports = User;

@@ -16,7 +16,7 @@ class Socket {
     //   }
     // });
     this.socketIO.on('connection', (socket) => {
-      console.log('New user connected', socket.req.headers);
+      console.log('New user connected', socket.rooms, socket.handshake);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
       // default username
       socket.username = 'Anonymous';
