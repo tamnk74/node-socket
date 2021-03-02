@@ -1,5 +1,6 @@
 import uuid from 'uuid';
 import Message from '../models/Message';
+import Jwt from './JWT';
 
 class Socket {
   constructor(socketIO) {
@@ -7,14 +8,17 @@ class Socket {
   }
 
   listenConnection() {
-    // this.socketIO.use(async (socket, next) => {
-    //   try {
-    //     const user = await fetchUser(socket);
-    //     socket.user = user;
-    //   } catch (e) {
-    //     next(new Error("unknown user"));
-    //   }
-    // });
+    this.socketIO.use(async (socket, next) => {
+      try {
+        let token = socket.handshake.query.token;
+        const payload = await Jwt.verifyToken(token)
+        socket.user = payload.user;
+
+        return next();
+      } catch (e) {
+        return next(e);
+      }
+    });
     this.socketIO.on('connection', (socket) => {
       console.log('New user connected', socket.id);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
@@ -25,11 +29,16 @@ class Socket {
         console.log('add message:', data);
         const message = new Message({
           id: uuid.v4(),
-          userId: data.userId || socket.userId,
+          userId: socket.user.id,
           message: data.message,
         });
         await message.save();
-        this.socketIO.sockets.emit('new_message', { message: data.message, username: socket.username, id: socket.id });
+        this.socketIO.sockets.emit('new_message', { message: data.message, userId: socket.user.id, id: message.id, socketId: socket.id });
+      });
+
+      // listen on error
+      socket.on('error', (error) => {
+        console.error('Error: ', error)
       });
 
       // listen on typing
