@@ -22,6 +22,7 @@ class Socket {
     this.socketIO.on('connection', (socket) => {
       console.log('New user connected', socket.id);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
+      this.socketIO.sockets.to(socket.id).emit('set_user', { user: socket.user });
 
       // listen on new_message
       socket.on('new_message', async (data) => {
@@ -33,7 +34,9 @@ class Socket {
           message: data.message,
         });
         await message.save();
-        this.socketIO.sockets.emit('new_message', { message: data.message, userId: socket.user.id, id: message.id, socketId: socket.id });
+        this.socketIO.sockets.emit('new_message', {
+          message, user: socket.user, id: message.id, socketId: socket.id
+        });
       });
 
       // listen on error

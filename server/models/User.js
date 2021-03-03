@@ -72,6 +72,7 @@ UserSchema.methods.toPayload = function toPayload() {
       email: this.email,
       name: this.name,
       fullName: this.fullName,
+      avatar: this.avatar,
     },
   };
 };
