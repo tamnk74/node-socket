@@ -44,7 +44,6 @@ export default class JWT {
 
   static async verifyToken(token) {
     const payload = await JsonWebToken.verify(token, jwtSecretKey);
-    console.log(payload);
     const isValidToken = await redis.hexists(`${authPrefix}:${payload.user.id}`, token);
     if (!isValidToken) {
       throw errorFactory.getError('ERR-0401');

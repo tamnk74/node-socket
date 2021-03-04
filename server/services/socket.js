@@ -1,4 +1,4 @@
-import uuid from 'uuid';
+import User from '../models/User';
 import Message from '../models/Message';
 import Jwt from './JWT';
 
@@ -20,22 +20,30 @@ class Socket {
       }
     });
     this.socketIO.on('connection', (socket) => {
-      console.log('New user connected', socket.id);
+      console.log('New user connected', socket.id, socket.user.name);
       this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
       this.socketIO.sockets.to(socket.id).emit('set_user', { user: socket.user });
+      Message.find().populate('user').skip(0)
+        .limit(20).then(messages => {
+          this.socketIO.sockets.to(socket.id).emit('set_messages', messages.map(message => message.toJSON()));
+        });
+      User.find().skip(0)
+        .limit(20).then(users => {
+          this.socketIO.sockets.to(socket.id).emit('set_users', users.map(user => user.toJSON()));
+        });
 
       // listen on new_message
       socket.on('new_message', async (data) => {
         // broadcast the new message
-        console.log('add message:', data);
+        console.log(socket.user.name + 'add a new message ', data);
         const message = new Message({
-          id: uuid.v4(),
-          userId: socket.user.id,
+          user: socket.user.id,
           message: data.message,
         });
         await message.save();
         this.socketIO.sockets.emit('new_message', {
-          message, user: socket.user, id: message.id, socketId: socket.id
+          ...message.toJSON(),
+          user: socket.user
         });
       });
 
@@ -45,12 +53,12 @@ class Socket {
       });
 
       // listen on typing
-      socket.on('typing', (data) => {
-        socket.broadcast.emit('typing', { username: socket.username });
+      socket.on('typing', () => {
+        socket.broadcast.emit('typing', {});
       });
 
       socket.on("disconnect", () => {
-        console.log(`Client ${socket.id} diconnected`);
+        console.log(`Client ${socket.id} disconnected`);
         // socket.leave(roomId);
       });
     });

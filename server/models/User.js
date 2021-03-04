@@ -81,6 +81,7 @@ UserSchema.methods.comparePassword = function comparePassword(candidatePassword)
   return bcryptjs.compareSync(candidatePassword, this.password);
 };
 
+console.log('add model user');
 const User = mongoose.model('User', UserSchema);
 User.INACTIVE = 0;
 

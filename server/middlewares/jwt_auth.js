@@ -1,5 +1,5 @@
 import { errorFactory } from '../errors';
-import User from '../models/user';
+import User from '../models/User';
 import JWT from '../helpers/JWT';
 
 export default async (req, res, next) => {
