@@ -1,4 +1,4 @@
-import User from '../../../models/user';
+import User from '../../../models/User';
 import { errorFactory } from '../../../errors';
 import Jwt from '../../../services/JWT';
 import redis from '../../../services/Redis';

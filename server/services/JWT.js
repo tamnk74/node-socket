@@ -1,4 +1,7 @@
 import JsonWebToken from 'jsonwebtoken';
+import { errorFactory } from '../errors';
+import redis from './Redis';
+import { authPrefix } from '../config';
 import { jwtExpireTime, jwtSecretKey, jwtRefreshKey, jwtRefreshExpireTime } from '../config';
 
 export default class JWT {
@@ -36,5 +39,15 @@ export default class JWT {
 
   static verifyRefreshToken(refreshToken) {
     return JsonWebToken.verify(refreshToken, jwtRefreshKey);
+  }
+
+
+  static async verifyToken(token) {
+    const payload = await JsonWebToken.verify(token, jwtSecretKey);
+    const isValidToken = await redis.hexists(`${authPrefix}:${payload.user.id}`, token);
+    if (!isValidToken) {
+      throw errorFactory.getError('ERR-0401');
+    }
+    return payload;
   }
 }

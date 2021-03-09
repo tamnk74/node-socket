@@ -1,5 +1,6 @@
-import uuid from 'uuid';
+import User from '../models/User';
 import Message from '../models/Message';
+import Jwt from './JWT';
 
 class Socket {
   constructor(socketIO) {
@@ -7,42 +8,58 @@ class Socket {
   }
 
   listenConnection() {
-    // this.socketIO.use(async (socket, next) => {
-    //   try {
-    //     const user = await fetchUser(socket);
-    //     socket.user = user;
-    //   } catch (e) {
-    //     next(new Error("unknown user"));
-    //   }
-    // });
-    this.socketIO.on('connection', (socket) => {
-      console.log('New user connected', socket.rooms, socket.handshake);
-      this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
-      // default username
-      socket.username = 'Anonymous';
+    this.socketIO.use(async (socket, next) => {
+      try {
+        let token = socket.handshake.query.token;
+        const payload = await Jwt.verifyToken(token)
+        socket.user = payload.user;
 
-      // Listen on change_username
-      socket.on('change_username', (data) => {
-        socket.username = data.username;
-        console.log('Username:', socket.id, socket.rooms, socket.username);
-      });
+        return next();
+      } catch (e) {
+        return next(e);
+      }
+    });
+    this.socketIO.on('connection', (socket) => {
+      console.log('New user connected', socket.id, socket.user.name);
+      this.socketIO.sockets.to(socket.id).emit('set_id', { socketId: socket.id });
+      this.socketIO.sockets.to(socket.id).emit('set_user', { user: socket.user });
+      Message.find().populate('user').skip(0)
+        .limit(20).then(messages => {
+          this.socketIO.sockets.to(socket.id).emit('set_messages', messages.map(message => message.toJSON()));
+        });
+      User.find().skip(0)
+        .limit(20).then(users => {
+          this.socketIO.sockets.to(socket.id).emit('set_users', users.map(user => user.toJSON()));
+        });
 
       // listen on new_message
       socket.on('new_message', async (data) => {
         // broadcast the new message
-        console.log('add message:', data);
+        console.log(socket.user.name + 'add a new message ', data);
         const message = new Message({
-          id: uuid.v4(),
-          userId: data.userId || socket.userId,
+          user: socket.user.id,
           message: data.message,
         });
         await message.save();
-        this.socketIO.sockets.emit('new_message', { message: data.message, username: socket.username, id: socket.id });
+        this.socketIO.sockets.emit('new_message', {
+          ...message.toJSON(),
+          user: socket.user
+        });
+      });
+
+      // listen on error
+      socket.on('error', (error) => {
+        console.error('Error: ', error)
       });
 
       // listen on typing
-      socket.on('typing', (data) => {
-        socket.broadcast.emit('typing', { username: socket.username });
+      socket.on('typing', () => {
+        socket.broadcast.emit('typing', {});
+      });
+
+      socket.on("disconnect", () => {
+        console.log(`Client ${socket.id} disconnected`);
+        // socket.leave(roomId);
       });
     });
   }

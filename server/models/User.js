@@ -72,6 +72,7 @@ UserSchema.methods.toPayload = function toPayload() {
       email: this.email,
       name: this.name,
       fullName: this.fullName,
+      avatar: this.avatar,
     },
   };
 };
@@ -80,6 +81,7 @@ UserSchema.methods.comparePassword = function comparePassword(candidatePassword)
   return bcryptjs.compareSync(candidatePassword, this.password);
 };
 
+console.log('add model user');
 const User = mongoose.model('User', UserSchema);
 User.INACTIVE = 0;
 

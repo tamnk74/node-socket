@@ -17,8 +17,8 @@ const app = express();
 
 
 const http = require('http').Server(app);
-const io = require('socket.io')(http);
-const socket = new Socket(io);
+const socketIO = require('socket.io')(http);
+
 // Allow cors
 app.use(cors());
 
@@ -36,6 +36,7 @@ app.set('view engine', 'ejs');
 app.use('/', WebRouter);
 app.use('/api', ApiRouter);
 
+const socket = new Socket(socketIO);
 socket.listenConnection();
 
 http.listen(port, () => console.log(`Listening on ${port}`));
