@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import { errorFactory } from '../errors';
 
 export default (schema, type = 'body') => (req, res, next) => {

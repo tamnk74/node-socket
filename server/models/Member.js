@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 import toJSON from './plugins/toJSON';
 
-const MessageSchema = mongoose.Schema({
+const MemberSchema = mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -13,15 +13,10 @@ const MessageSchema = mongoose.Schema({
     ref: 'Room',
     required: true,
   },
-  message: {
-    type: String,
-    required: true,
-  },
 }, {
   timestamps: true,
 });
 
-MessageSchema.plugin(toJSON);
-console.log('Add model message')
+MemberSchema.plugin(toJSON);
 
-module.exports = mongoose.model('Message', MessageSchema);
+module.exports = mongoose.model('Message', MemberSchema);
