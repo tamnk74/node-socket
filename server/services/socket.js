@@ -25,20 +25,18 @@ class Socket {
       console.log('New user connected', socket.id, socket.user.name);
       this.socketIO.sockets.to(socket.id).emit(events.SET_ID, { socketId: socket.id });
       this.socketIO.sockets.to(socket.id).emit(events.SET_USER, { user: socket.user });
-      Message.find().populate('user').skip(0)
-        .limit(20).then(messages => {
-          this.socketIO.sockets.to(socket.id).emit(events.SET_MESSAGES, messages.map(message => message.toJSON()));
-        });
       User.find().skip(0)
         .limit(20).then(users => {
           this.socketIO.sockets.to(socket.id).emit(events.SET_USERS, users.map(user => user.toJSON()));
         });
-      Room.find().skip(0)
+      Room.find({
+        members: socket.user.id
+      }).skip(0)
         .limit(20).then(rooms => {
           this.socketIO.sockets.to(socket.id).emit(events.SET_ROOMS, rooms.map(room => room.toJSON()));
         });
 
-      socket.on('join_room', async ({ roomId, roomKey }, callback) => {
+      socket.on(events.JOIN_ROOM, async ({ roomId, roomKey }) => {
         const room = roomId ? await Room.findById(roomId)
           : Room.findOrCreate({
             key: roomKey
@@ -50,12 +48,17 @@ class Socket {
         if (!room) return callback(new Error('Invalid room'));
 
         socket.room = room;
+        Message.find({
+          room: room.id
+        }).populate('user').skip(0)
+          .limit(20).sort('-createdAt').then(messages => {
+            this.socketIO.sockets.to(socket.id).emit(events.SET_MESSAGES, messages.map(message => message.toJSON()));
+          });
+
         socket.join(room.id);
-        socket.broadcast.to(room.id).emit('message', { user: user, text: `${socket.user.name} has joined!` });
 
-        io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
-
-        callback();
+        // socket.broadcast.to(room.id).emit('message', { user: user, text: `${socket.user.name} has joined!` });
+        // io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
       });
 
       // listen on new_message
@@ -63,6 +66,7 @@ class Socket {
         // broadcast the new message
         console.log(socket.user.name + ' add a new message ', data);
         const message = new Message({
+          room: socket.room && socket.room.id,
           user: socket.user.id,
           message: data.message,
         });

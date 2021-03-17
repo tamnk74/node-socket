@@ -14,8 +14,8 @@ const Message = require('../../models/Message');
 async function dbseed() {
   try {
     // await seeder.import(collections);
-    // await userSeeder();
-    await Message.deleteMany({ roomId: null });
+    await userSeeder();
+    // await Message.deleteMany({ roomId: null });
     await roomSeeder();
     console.log('Done seeder!!!');
     process.exit();
