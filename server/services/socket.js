@@ -25,48 +25,70 @@ class Socket {
       console.log('New user connected', socket.id, socket.user.name);
       this.socketIO.sockets.to(socket.id).emit(events.SET_ID, { socketId: socket.id });
       this.socketIO.sockets.to(socket.id).emit(events.SET_USER, { user: socket.user });
-      User.find().skip(0)
-        .limit(20).then(users => {
-          this.socketIO.sockets.to(socket.id).emit(events.SET_USERS, users.map(user => user.toJSON()));
-        });
+      User.find().skip(0).limit(20).then(users => {
+        this.socketIO.sockets.to(socket.id).emit(events.SET_USERS, users.map(user => user.toJSON()));
+      });
       Room.find({
-        members: socket.user.id
+        members: socket.user.id,
+        type: 1,
       }).skip(0)
         .limit(20).then(rooms => {
           this.socketIO.sockets.to(socket.id).emit(events.SET_ROOMS, rooms.map(room => room.toJSON()));
         });
 
-      socket.on(events.JOIN_ROOM, async ({ roomId, roomKey }, callback) => {
-        const room = roomId ? await Room.findById(roomId)
-          : Room.findOrCreate({
-            key: roomKey
+      socket.on(events.JOIN_ROOM, async ({ roomId, members }) => {
+        if (roomId) {
+          const room = await Room.findById(roomId);
+          if (!room) throw new Error('Invalid room');
+
+          socket.room = room;
+          Message.find({
+            room: room.id
+          }).populate('user').skip(0)
+            .limit(20).then(messages => {
+              this.socketIO.sockets.to(socket.id).emit(events.SET_MESSAGES, messages.map(message => message.toJSON()));
+            });
+          socket.join(room.id);
+          this.socketIO.sockets.to(socket.id).emit(events.SET_ROOM, room);
+          return
+        }
+        if (Array.isArray(members) && members.length == 2) {
+          const users = await User.find({
+            '_id': { $in: members }
+          });
+          console.log(members, users);
+          if (users.length !== [...new Set(members)].length) {
+            throw new Error('members.invalid');
+          }
+          const [, room] = await Room.findOrCreate({
+            members: users.map(user => user.id),
+            type: 0,
           }, {
-            key: roomKey,
-            name: roomKey,
+            type: 0,
+            key: members.sort().join('#'),
+            name: members.sort().join('-'),
+            members: users.map(user => user.id)
           });
+          socket.room = room;
+          Message.find({
+            room: room.id
+          }).populate('user').skip(0)
+            .limit(20).then(messages => {
+              this.socketIO.sockets.to(socket.id).emit(events.SET_MESSAGES, messages.map(message => message.toJSON()));
+            });
+          socket.join(room.id);
 
-        if (!room) return callback(new Error('Invalid room'));
 
-        socket.room = room;
-        Message.find({
-          room: room.id
-        }).populate('user').skip(0)
-          .limit(20).then(messages => {
-            this.socketIO.sockets.to(socket.id).emit(events.SET_MESSAGES, messages.map(message => message.toJSON()));
-          });
-
-        socket.join(room.id);
-        socket.broadcast.to(room.id).emit('message', { user: user, text: `${socket.user.name} has joined!` });
-
-        io.to(user.room).emit('roomData', { room: user.room, users: getUsersInRoom(user.room) });
-
-        callback();
+          this.socketIO.sockets.to(socket.id).emit(events.SET_ROOM, room);
+          return;
+        }
+        // socket.broadcast.to(room.id).emit('message', { user: user, text: `${socket.user.name} has joined!` });
       });
 
       // listen on new_message
       socket.on('new_message', async (data) => {
         // broadcast the new message
-        console.log(socket.user.name + ' add a new message ', data);
+        console.log(socket.user.name + ' add a new message in ', socket.room, data);
         const message = new Message({
           room: socket.room && socket.room.id,
           user: socket.user.id,
