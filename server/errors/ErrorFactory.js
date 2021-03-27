@@ -4,45 +4,28 @@ import ApiError from './ApiError';
 import { env } from '../config';
 
 class ErrorFactory {
-  getError = (errorCode, error = null) => {
-    // Handle defined error code
-    const originalError = error;
-    if (!error) {
-      error = errors[errorCode];
+  getError(code, err = null) {
+    const error = errors[code];
+    if (error) {
+      return new ApiError({
+        code,
+        ...error,
+      });
     }
     // Handle undefined error code
-    if (!error) {
-      console.log('Missing error ', errorCode);
-      error = errors['ERR-0500'];
-      error.code = 500;
+    if (env !== 'production') {
+      console.log(env, code);
     }
-    // Handle Joi error
-    if (error && error.isJoi) {
-      const {
-        type,
-        context: { key },
-      } = error;
-      errorCode = joiErrors[`${key}.${type}`];
-      error = errors[errorCode] || error;
-      error.code = errorCode;
-    }
-    // Handle other errors
-    if (!error.status) {
-      error = {
-        ...errors['ERR-0500'],
-        ...error,
-        status: 500,
-        code: 'ERR-0500',
-      };
-      error.detail = originalError.message || error.detail;
-    }
-    error.code = errorCode || error.code;
 
-    return new ApiError(error);
+    return new ApiError({
+      ...errors['ERR-0500'],
+      code: 'ERR-0500',
+      detail: err ? err.message : 'Internal Server Error',
+    });
   };
 
-  getJoiErrors = (joiErrors = []) => {
-    if (env !== 'production') {
+  getJoiErrors(joiErrors = []) {
+    if (env === 'development') {
       console.log(env, joiErrors);
     }
     return joiErrors.map((joiError) => {

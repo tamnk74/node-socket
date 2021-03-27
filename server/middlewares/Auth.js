@@ -7,8 +7,11 @@ import { status } from '../constants';
 
 export default (req, res, next) => {
   passport.authenticate('jwt', { session: false }, async (err, jwtPayload) => {
+    if (err) {
+      console.error(err);
+      return next(errorFactory.getError('ERR-0401'));
+    }
     const { user } = jwtPayload;
-
     if (!user) {
       return next(errorFactory.getError('ERR-0401'));
     }

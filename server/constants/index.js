@@ -10,4 +10,5 @@ export const events = {
   JOIN_ROOM: 'join_room',
   SET_USERS: 'set_users',
   SET_USER: 'set_user',
+  SET_ROOM: 'set_room',
 }
