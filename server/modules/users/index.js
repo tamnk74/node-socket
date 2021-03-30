@@ -1,8 +1,12 @@
 import { Router } from 'express';
-// import { userController } from './controllers';
-// import { auth } from '../../middlewares';
+import { SubscribeController } from './controllers';
+import { auth, validator } from '../../middlewares';
+import { subscribeSchema } from './schemas';
 
 const router = Router();
+
+router.post('/me/subscribe', auth, validator(subscribeSchema), SubscribeController.subscribe);
+router.post('/me/unsubscribe', auth, validator(subscribeSchema), SubscribeController.unsubscribe);
 
 // router.get('/users/', [auth], userController.index);
 // router.post('/users', userController.create);

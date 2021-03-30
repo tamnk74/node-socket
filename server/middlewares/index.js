@@ -1,3 +1,2 @@
-import authMiddleware from './Auth';
-
-export const auth = authMiddleware;
+export * from './auth';
+export * from './validator';

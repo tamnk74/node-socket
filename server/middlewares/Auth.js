@@ -5,7 +5,7 @@ import redis from '../services/Redis';
 import { authPrefix } from '../config';
 import { status } from '../constants';
 
-export default (req, res, next) => {
+export const auth = (req, res, next) => {
   passport.authenticate('jwt', { session: false }, async (err, jwtPayload) => {
     if (err) {
       console.error(err);

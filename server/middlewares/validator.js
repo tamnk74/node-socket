@@ -1,6 +1,6 @@
 import { errorFactory } from '../errors';
 
-export default (schema, type = 'body') => (req, res, next) => {
+export const validator = (schema, type = 'body') => (req, res, next) => {
   const body = req[type];
   const { error } = schema.validate(body);
   if (error == null) {

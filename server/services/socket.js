@@ -3,6 +3,7 @@ import Message from '../models/Message';
 import Room from '../models/Room';
 import Jwt from './JWT';
 import { events } from '../constants'
+import Fcm from './Fcm';
 
 class Socket {
   constructor(socketIO) {
@@ -66,7 +67,7 @@ class Socket {
           }, {
             type: 0,
             key: members.sort().join('#'),
-            name: members.sort().join('-'),
+            name: members.sort().join('_'),
             members: users.map(user => user.id)
           });
           socket.room = room;
@@ -93,6 +94,7 @@ class Socket {
           message: data.message,
         });
         await message.save();
+        Fcm.notifyNewMessage(socket.room && socket.room.key, message, socket.user);
         this.socketIO.sockets.emit('new_message', {
           ...message.toJSON(),
           user: socket.user
